@@ -1,0 +1,24 @@
+<html>
+    <head>
+        {% if title %}
+        <title>{{ title }}</title>
+        {% else %}
+        <title>Compute Job Recorder</title>
+        {% endif %}
+    </head>
+    <body>
+        <div>Compute Job Recorder: <a href="/index">Home</a> <a href="/upload">Upload</a> <a href="/joblist">Job List</a></div>
+        <hr>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}    
+    </body>
+</html>
+

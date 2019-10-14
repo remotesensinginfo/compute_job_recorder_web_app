@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+    
+    	<table style="width:100%">
+		<tr>
+			<th>Job ID</th>
+			<th>Job Name</th> 
+			<th>Start Time</th>
+			<th>End Time</th>
+		</tr>
+        {% for job in jobs %}
+		<tr>
+		<td>{{ job.jobid }}</td>
+		<td><b>{{ job.jobname }}</b></td> 
+		<td>{{ job.start.year }}/{{ job.start.month }}/{{ job.start.day }} {{ job.start.hour }}:{{ job.start.minute }}:{{ job.start.second }}</td>
+		<td>{{ job.end.year }}/{{ job.end.month }}/{{ job.end.day }} {{ job.end.hour }}:{{ job.end.minute }}:{{ job.end.second }}</td>
+		</tr>
+        {% endfor %}
+        </table>
+
+    
+{% endblock %}

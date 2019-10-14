@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <h2>Jobs from: {{ fileinfo.filename }}</h2>
+        
+        <ol>
+	        {% for job in jobs %}
+	        <li>{{ job.jobname }}: 
+		        <a href='/tasklist?jobname={{ job.jobname }}&status=all'>All</a>
+		        <a href='/tasklist?jobname={{ job.jobname }}&status=uncomplete'>Uncomplete</a>
+		    </li>
+	        {% endfor %}
+	    </ol>
+        
+{% endblock %}
+

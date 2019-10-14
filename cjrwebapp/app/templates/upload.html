@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Upload Database File</h1>
+    <form method="POST" enctype="multipart/form-data" >
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.sqlite_file.label }}<br>
+            {{ form.sqlite_file(size=32) }}
+            {% for error in form.sqlite_file.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ form.upload() }}</p>
+    </form>
+{% endblock %}
