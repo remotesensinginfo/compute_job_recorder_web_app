@@ -1,10 +1,10 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, request, session
 from werkzeug.utils import secure_filename
 import os.path
 import os
-import shutil
 import glob
 import json
+import uuid
 
 from app import app
 
@@ -23,6 +23,18 @@ class UploadDBForm(FlaskForm):
     upload = SubmitField('Upload')
 
 
+def get_db_connect_str():
+    if 'db_file' not in session:
+        flash('A database file has not be specified, please upload.')
+        return None
+    lcl_filename = session['db_file']
+    ful_lcl_filepath = os.path.join(DB_FILE_DIR, lcl_filename)
+    if not os.path.exists(ful_lcl_filepath):
+        flash('Something has gone wrong no input database file was found.')
+        return None
+    cjr_db_file = 'sqlite:///' + ful_lcl_filepath
+    return cjr_db_file
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -35,52 +47,40 @@ def uploaddb():
     if form.validate_on_submit():
         f = form.sqlite_file.data
         filename = secure_filename(f.filename)
-        flash('File to upload {}'.format(filename))
-        cjrdb_conn = None
-        if os.getenv('CJR_DB_FILE', None) is not None:
-            cjrdb_conn = cjrlib.cjr_db_connection.CJRDBConnection()
-            if cjrdb_conn is not None:
-                cjrdb_conn.delete_obj()
-        if os.path.exists(DB_FILE_DIR):
-            shutil.rmtree(DB_FILE_DIR)
-        os.makedirs(DB_FILE_DIR, exist_ok=True)
-        f.save(os.path.join(DB_FILE_DIR, filename))
 
-        # Find the database file which has been saved to the local file system.
-        dbfiles = glob.glob(os.path.join(DB_FILE_DIR, '*'))
-        db_file = None
-        db_file_basename = ''
-        if len(dbfiles) == 0:
-            flash('Something has gone wrong no input database file was file.')
-            return redirect('/upload')
-        elif len(dbfiles) == 1:
-            db_file = dbfiles[0]
-            db_file_basename = os.path.basename(db_file)
-        else:
-            flash('Something has gone wrong there seem to be multiple input database files.')
-            return redirect('/upload')
+        if not os.path.exists(DB_FILE_DIR):
+            os.makedirs(DB_FILE_DIR, exist_ok=True)
 
-        os.environ['CJR_DB_FILE'] = 'sqlite:///' + db_file
-        if cjrdb_conn is None:
-            cjrdb_conn = cjrlib.cjr_db_connection.CJRDBConnection()
-        else:
-            cjrdb_conn.refresh_db()
-        flash('Successfully uploaded "{}".'.format(db_file_basename))
+        ran_filename_str = str(uuid.uuid4()).replace("-", "")[0:10]
+        file_basename, file_ext = os.path.splitext(filename)
+        lcl_filename = "{}_{}{}".format(file_basename, ran_filename_str, file_ext)
+        ful_lcl_filepath = os.path.join(DB_FILE_DIR, lcl_filename)
+        f.save(ful_lcl_filepath)
+
+        if not os.path.exists(ful_lcl_filepath):
+            flash('Something has gone wrong no input database file was found.')
+            return redirect('/upload')
+        #else
+        session['db_file'] = lcl_filename
         return redirect('/joblist')
     return render_template('upload.html', title='Upload: Compute Job Recorder', form=form)
 
 
 @app.route('/joblist')
 def joblist():
+    cjr_db_file = get_db_connect_str()
+    if cjr_db_file is None:
+        return redirect('/upload')
+
     try:
-        job_names = cjrlib.cjr_queries.query_job_names()
+        job_names = cjrlib.cjr_queries.query_job_names(cjr_db_file=cjr_db_file)
     except Exception as e:
         flash('Something has gone wrong reading the database file to retrieve job names - try another file.')
         return redirect('/upload')
 
     jobs = []
     for job_name in job_names:
-        versions = cjrlib.cjr_queries.get_job_versions(job_name)
+        versions = cjrlib.cjr_queries.get_job_versions(job_name, cjr_db_file=cjr_db_file)
         for version in versions:
             jobs.append({'jobname': job_name, 'version': version})
 
@@ -92,15 +92,19 @@ def tasklist():
     version = request.args.get('version')
     status = request.args.get('status')
 
+    cjr_db_file = get_db_connect_str()
+    if cjr_db_file is None:
+        return redirect('/upload')
+
     tasks = []
     if status == 'all':
         try:
-            tasks = cjrlib.cjr_queries.get_all_tasks(job_name, version)
+            tasks = cjrlib.cjr_queries.get_all_tasks(job_name, version, cjr_db_file=cjr_db_file)
         except:
             flash('Something has gone wrong, the job/version combination is probably not valid')
     elif status == 'uncomplete':
         try:
-            tasks = cjrlib.cjr_queries.get_uncompleted_tasks(job_name, version)
+            tasks = cjrlib.cjr_queries.get_uncompleted_tasks(job_name, version, cjr_db_file=cjr_db_file)
         except:
             flash('Something has gone wrong, the job/version combination is probably not valid')
     else:
@@ -115,9 +119,13 @@ def taskinfo():
     version = request.args.get('version')
     task_id = request.args.get('taskid')
 
+    cjr_db_file = get_db_connect_str()
+    if cjr_db_file is None:
+        return redirect('/upload')
+
     task = {}
     try:
-        task = cjrlib.cjr_queries.get_task(job_name, task_id, version)
+        task = cjrlib.cjr_queries.get_task(job_name, task_id, version, cjr_db_file=cjr_db_file)
     except:
         flash('Something has gone wrong, the task/job/version combination is probably not valid')
 
