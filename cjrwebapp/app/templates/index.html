@@ -26,23 +26,30 @@
 
     <p>
         Compute Job Recorder aims to solve this issue by recording the start, end and progress of tasks in a generic
-        database structure with little overhead.
+        database structure with a small overhead. However, it is not recommended that you put Compute Job Recorder
+        function calls within a loop, it is intended to be used sparsely within your system.
     </p>
 
     <h2>How do I use Compute Job Recorder?</h2>
     <p>The first step is to set an environment <code>CJR_DB_FILE</code> so the database can be found during execution.</p>
 
     <pre>
-        <code>
+        <code class="prettyprint">
 export CJR_DB_FILE="/home/user/cjr_logging_db.sqlite"
         </code>
     </pre>
 
     <h3>Python</h3>
-
+    <p>
+        In python there is a single function you call. You just need to use the same job name (string),
+        task ID (string) and version (int) for each call. You must call the function with a <code>START</code>
+        status before <code>UPDATE</code> or <code>END</code> are used. The task information is provided as
+        a python dictionary which is stored as a JSON string within the database.
+    </p>
     <pre>
-        <code>
+        <code class="prettyprint">
 from cjrlib.cjr_recorder import record_task_status, JobStatus
+
 record_task_status(JobStatus.START, "Job1", "Tile1", 1, {'param1':param1_val, 'param2':param2_val})
 # Doing some work
 record_task_status(JobStatus.UPDATE, "Job1", "Tile1", 1, {'process':process_info, 'function':'doing_something()'})
@@ -52,9 +59,15 @@ record_task_status(JobStatus.FINISH, "Job1", "Tile1", 1, {'output':output_file})
     </pre>
 
     <h3>Shell Script</h3>
-
+    <p>
+        When using the command line tool you have the same interface as the python function but
+        rather than provide a python dictionary you need to provide a JSON string with the extra information.
+        You can use the python function and terminal command inter-changeably throughout your system.
+        For example, <code>START</code> and <code>END</code> could be called from the terminal command
+        and <code>UPDATE</code> coded within a python script.
+    </p>
     <pre>
-        <code>
+        <code class="prettyprint">
 cjr_record.py -s START -j Job1 -t Tile1 -v 1 -i "{'param1':1, 'param2':22.2}"
 # Doing some work
 cjr_record.py -s UPDATE -j Job1 -t Tile1 -v 1 -i "{'cmd':'gdal_translate}"

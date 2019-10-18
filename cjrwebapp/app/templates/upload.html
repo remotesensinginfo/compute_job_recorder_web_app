@@ -2,6 +2,18 @@
 
 {% block content %}
     <h1>Upload Database File</h1>
+
+    <p>
+        A SQLite database file which has been outputted from the Compute Job Recorder software is required as
+        input to this website which will then visual the jobs and tasks within the database allowing you to
+        find which tasks have worked and which have failed.
+    </p>
+
+    <p>
+        The SQLite file you upload must have a file extension of either <code>*.db</code> or <code>*.sqlite</code>
+        to be accepted by the uploader.
+    </p>
+
     <form method="POST" enctype="multipart/form-data" >
         {{ form.hidden_tag() }}
         <p>
@@ -13,4 +25,9 @@
         </p>
         <p>{{ form.upload() }}</p>
     </form>
+
+    <p>
+        Once you submit, if successful, you will be directed to a list of the jobs available within
+        the database file you upload.
+    </p>
 {% endblock %}
