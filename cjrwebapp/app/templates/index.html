@@ -1,8 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Welcome to Compute Job Recorder </h1>
-    
-    <p>First you to <a href="/upload"> upload </a> a database file </p>
-    
+    <h2>Existing User</h2>
+    <p>If you are an existing user and know what you are doing then <a href="/upload"> upload </a> your database file and
+        get on with your analysis.</p>
+
+    <h2>What is Compute Job Recorder? </h2>
+    <p>
+        Compute Job Recorder is a light weight tool, written in python for recording the start, end and progress of
+        tasks in a generic database sqlite structure.
+    </p>
+
+    <h2>Why Compute Job Recorder? </h2>
+    <p>
+        Do you process many input files producing many output files. How to do you know that all your jobs have
+        completed? For me, I end up grepping log file for the would 'error', although if I do find something find
+        which file it is associated with can be difficult. Alternatively, I find out something went wrong only
+        when I come to merge the results product files to find some are missing.
+    </p>
+
+    <p>
+        This can end up wasting a lot of time and effort sorting out problems which would have been easier to
+        sort out when your were undertaking that processing step.
+    </p>
+
+    <p>
+        Compute Job Recorder aims to solve this issue by recording the start, end and progress of tasks in a generic
+        database structure with little overhead.
+    </p>
+
+    <h2>How do I use Compute Job Recorder?</h2>
+    <p>The first step is to set an environment <code>CJR_DB_FILE</code> so the database can be found during execution.</p>
+
+    <pre>
+        <code>
+export CJR_DB_FILE="/home/user/cjr_logging_db.sqlite"
+        </code>
+    </pre>
+
+    <h3>Python</h3>
+
+    <pre>
+        <code>
+from cjrlib.cjr_recorder import record_task_status, JobStatus
+record_task_status(JobStatus.START, "Job1", "Tile1", 1, {'param1':param1_val, 'param2':param2_val})
+# Doing some work
+record_task_status(JobStatus.UPDATE, "Job1", "Tile1", 1, {'process':process_info, 'function':'doing_something()'})
+# Continue doing some work
+record_task_status(JobStatus.FINISH, "Job1", "Tile1", 1, {'output':output_file})
+        </code>
+    </pre>
+
+    <h3>Shell Script</h3>
+
+    <pre>
+        <code>
+cjr_record.py -s START -j Job1 -t Tile1 -v 1 -i "{'param1':1, 'param2':22.2}"
+# Doing some work
+cjr_record.py -s UPDATE -j Job1 -t Tile1 -v 1 -i "{'cmd':'gdal_translate}"
+# Continue doing some work
+cjr_record.py -s FINISH -j Job1 -t Tile1 -v 1 -i "{'output':'output.kea'}"
+        </code>
+    </pre>
+
 {% endblock %}
