@@ -2,7 +2,6 @@ from flask import render_template, flash, redirect, request, session
 from werkzeug.utils import secure_filename
 import os.path
 import os
-import glob
 import json
 import uuid
 
@@ -10,8 +9,7 @@ from app import app
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import SubmitField
 
 import cjrlib.cjr_queries
 import cjrlib.cjr_db_connection
