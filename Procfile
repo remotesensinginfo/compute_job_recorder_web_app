@@ -1,1 +1,1 @@
-web: gunicorn cjrwebapp:cjrwebapp.py
+web: gunicorn cjrwebapp:app
