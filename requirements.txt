@@ -7,3 +7,7 @@ joblib==0.14.0
 tornado==6.0.3
 Werkzeug==0.16.0
 WTForms==2.2.1
+gunicorn=19.9.0
+itsdangerous==1.1.0
+MarkupSafe==1.1.1
+Click==7.0
