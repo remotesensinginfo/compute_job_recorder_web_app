@@ -4,6 +4,7 @@ import os.path
 import os
 import json
 import uuid
+import time
 
 from app import app
 
@@ -33,6 +34,21 @@ def get_db_connect_str():
     cjr_db_file = 'sqlite:///' + ful_lcl_filepath
     return cjr_db_file
 
+
+def rm_old_files(file_path, max_day_age=1):
+    """
+    Check and remove files which are over the max_age since last modification.
+    :param file_path: the file path to check for old files.
+    :param max_day_age: maximum age of file (base of modification) in days
+    """
+    now_t = time.time()
+    for f in os.listdir(file_path):
+        c_file = os.path.join(file_path, f)
+        if os.path.isfile(c_file):
+            if os.stat(c_file).st_mtime < (now_t - max_day_age * 86400):
+                os.remove(c_file)
+
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -45,20 +61,23 @@ def uploaddb():
     if form.validate_on_submit():
         f = form.sqlite_file.data
         filename = secure_filename(f.filename)
-
+        # Create directory if not present
         if not os.path.exists(DB_FILE_DIR):
             os.makedirs(DB_FILE_DIR, exist_ok=True)
-
+        # Remove files older then 1 day.
+        rm_old_files(DB_FILE_DIR)
+        # Create file name for file being uploaded
         ran_filename_str = str(uuid.uuid4()).replace("-", "")[0:10]
         file_basename, file_ext = os.path.splitext(filename)
         lcl_filename = "{}_{}{}".format(file_basename, ran_filename_str, file_ext)
         ful_lcl_filepath = os.path.join(DB_FILE_DIR, lcl_filename)
+        # Perfrom upload/save to local space
         f.save(ful_lcl_filepath)
-
+        # Check file has been correctly uploaded.
         if not os.path.exists(ful_lcl_filepath):
             flash('Something has gone wrong no input database file was found.')
             return redirect('/upload')
-        #else
+        #else if uploaded save to session cookie for reuse.
         session['db_file'] = lcl_filename
         return redirect('/joblist')
     return render_template('upload.html', title='Upload: Compute Job Recorder', form=form)
